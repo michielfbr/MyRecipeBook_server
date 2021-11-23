@@ -15,6 +15,8 @@ module.exports = {
           model: "recipes",
           key: "id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
       tagId: {
         allowNull: false,
@@ -23,6 +25,8 @@ module.exports = {
           model: "tags",
           key: "id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
       createdAt: {
         allowNull: false,

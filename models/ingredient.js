@@ -8,7 +8,6 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // ingredient.hasMany(models.recipe_ingredient);
       ingredient.belongsToMany(models.recipe, { through: "recipe_ingredients"});
     }
   }

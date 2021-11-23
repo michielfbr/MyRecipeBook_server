@@ -1,11 +1,15 @@
 const express = require("express");
 const loggerMiddleWare = require("morgan");
+const corsMiddleWare = require("cors");
 const { PORT } = require("./config/constants");
-const recipeRouter = require("./routers/recipes")
-
+const recipeRouter = require("./routers/recipes");
+const authRouter = require("./routers/auth");
 
 const app = express();
+app.use(corsMiddleWare());
 app.use(loggerMiddleWare("dev"));
+const bodyParserMiddleWare = express.json();
+app.use(bodyParserMiddleWare);
 
 if (process.env.DELAY) {
   app.use((req, res, next) => {
@@ -13,22 +17,13 @@ if (process.env.DELAY) {
   });
 }
 
-app.get("/", (req, res) => {
-  res.send("Hi from express");
-});
+app.use("/auth", authRouter);
+app.use("/recipe", recipeRouter);
 
-/**
- * Routes
- *
- * DEFINE YOUR ROUTES AFTER THIS MESSAGE (now that middlewares are configured)
- */
-
- app.use("/recipe", recipeRouter);
-
-// GET endpoint for testing purposes, can be removed
-app.get("/", (req, res) => {
-  res.send("Hi from express");
-});
+// // GET endpoint for testing purposes, can be removed
+// app.get("/", (req, res) => {
+//   res.send("Hi from express");
+// });
 
 // POST endpoint for testing purposes, can be removed
 app.post("/echo", (req, res) => {

@@ -1,7 +1,7 @@
 const { Router } = require("express");
 // const authMiddleware = require("../auth/middleware");
-const ingredient = require("../models/").ingredient;
-const recipe = require("../models").recipe;
+const { ingredient, recipe, tag } = require("../models/");
+// const recipe = require("../models").recipe;
 const recipe_ingredient = require("../models").recipe_ingredient;
 
 const router = new Router();
@@ -17,6 +17,13 @@ router.get("/all", async (req, res, next) => {
           required: false,
           attributes: ["title"],
           through: { attributes: ["quantity", "unit_singular", "unit_plural"] },
+        },
+        {
+          model: tag,
+          as: `tags`,
+          required: false,
+          attributes: ["title"],
+          through: { attributes: [] }
         },
       ],
     });
@@ -39,6 +46,13 @@ router.get("/:recipeId", async (req, res, next) => {
           required: false,
           attributes: ["title"],
           through: { attributes: ["quantity", "unit_singular", "unit_plural"] },
+        },
+        {
+          model: tag,
+          as: `tags`,
+          required: false,
+          attributes: ["title"],
+          through: { attributes: [] }
         },
       ],
     });
