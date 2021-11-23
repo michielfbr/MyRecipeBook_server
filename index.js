@@ -1,9 +1,8 @@
 const express = require("express");
 const loggerMiddleWare = require("morgan");
 const { PORT } = require("./config/constants");
-const ingredient = require("./models/").ingredient;
-const recipe = require("./models").recipe;
-const recipe_ingredient = require("./models").recipe_ingredient;
+const recipeRouter = require("./routers/recipes")
+
 
 const app = express();
 app.use(loggerMiddleWare("dev"));
@@ -14,29 +13,8 @@ if (process.env.DELAY) {
   });
 }
 
-// app.get("/", (req, res) => {
-//   res.send("Hi from express");
-// });
-
-// Get all recipes
-app.get("/", async (req, res, next) => {
-  try {
-    const allRecipes = await recipe.findAll({
-      include: [
-        {
-          model: ingredient,
-          as: `ingredients`,
-          required: false,
-          attributes: ["title"],
-          through: { attributes: ["quantity", "unit_singular", "unit_plural"] },
-        },
-      ],
-    });
-    console.log("All recipes requested.");
-    res.status(200).send(allRecipes);
-  } catch (e) {
-    console.log(e.message);
-  }
+app.get("/", (req, res) => {
+  res.send("Hi from express");
 });
 
 /**
@@ -44,6 +22,8 @@ app.get("/", async (req, res, next) => {
  *
  * DEFINE YOUR ROUTES AFTER THIS MESSAGE (now that middlewares are configured)
  */
+
+ app.use("/recipe", recipeRouter);
 
 // GET endpoint for testing purposes, can be removed
 app.get("/", (req, res) => {
