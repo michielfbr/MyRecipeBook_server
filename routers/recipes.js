@@ -9,7 +9,7 @@ const router = new Router();
 // Get all recipes of user
 router.get("/all/:userId", async (req, res, next) => {
   try {
-    const userId = parseInt(req.params.userId)
+    const userId = parseInt(req.params.userId);
     const allRecipes = await recipe.findAll({
       where: {
         userId: userId,
@@ -33,7 +33,6 @@ router.get("/all/:userId", async (req, res, next) => {
       ],
     });
     console.log("All recipes requested for user:", userId);
-    // delete allRecipes.dataValues["createdAt"];
     res.status(200).send(allRecipes);
   } catch (e) {
     console.log(e.message);
@@ -44,8 +43,16 @@ router.get("/all/:userId", async (req, res, next) => {
 router.get("/:recipeId", async (req, res, next) => {
   try {
     const recipeId = parseInt(req.params.recipeId);
-    console.log(recipeId)
+    console.log(recipeId);
     const specificRecipe = await recipe.findByPk(recipeId, {
+      attributes: [
+        "id",
+        "title",
+        "instructions",
+        "cookingTime",
+        "imageUrl",
+        "reference",
+      ],
       include: [
         {
           model: ingredient,
