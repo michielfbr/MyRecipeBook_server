@@ -1,7 +1,6 @@
 const { Router } = require("express");
-// const authMiddleware = require("../auth/middleware");
+const authMiddleware = require("../auth/middleware");
 const { ingredient, recipe, tag } = require("../models/");
-// const recipe = require("../models").recipe;
 const recipe_ingredient = require("../models").recipe_ingredient;
 
 const router = new Router();
@@ -88,19 +87,24 @@ router.post("/new", async (req, res) => {
     const newRecipe = await recipe.create(req.body);
 
     // Loop through all the items in req.ingredients
-    for (const ingredient of req.body.ingredients) {
-      console.log("ingedrient", ingredient);
+    for (const ingredientToAdd of req.body.ingredients) {
+      console.log("ingedrientToAdd", ingredientToAdd);
       // Search for the ingredient with the givenTitle and make sure it exists. If it doesn't, create newIngredient.
-      const addIngredient = await ingredient.findOrCreate({
-        where: { title: ingredient.title },
+      const [Ingredient] = await ingredient.findOrCreate({
+        where: {
+          title: ingredientToAdd.title,
+          quantity: ingredientToAdd.quantity,
+          unit_singular: ingredientToAdd.unit_singular,
+          unit_plural: ingredientToAdd.unit_plural,
+        },
       });
-
+      console.log(Ingredient)
       // Create a dictionary with which to create the RecipeIngredient
       const rec_ing = {
         recipeId: newRecipe.id,
-        ingredientId: ingredient.id,
-        quantity: ingredient.quantity,
-        unit: ingredient.unit,
+        ingredientId: Ingredient.id,
+        quantity: Ingredient.quantity,
+        unit: Ingredient.unit,
       };
 
       // Create and save a recipeIngredient
