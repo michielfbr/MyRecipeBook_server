@@ -37,7 +37,7 @@ module.exports = {
         type: Sequelize.STRING,
       },
       unit_plural: {
-        allowNull: false,
+        // allowNull: false,
         type: Sequelize.STRING,
       },
       createdAt: {

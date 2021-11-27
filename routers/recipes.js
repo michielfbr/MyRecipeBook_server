@@ -2,6 +2,7 @@ const { Router } = require("express");
 const authMiddleware = require("../auth/middleware");
 const { ingredient, recipe, tag } = require("../models/");
 const recipe_ingredient = require("../models").recipe_ingredient;
+const recipe_tag = require("../models").recipe_tag;
 
 const router = new Router();
 
@@ -82,7 +83,7 @@ router.get("/:recipeId", async (req, res, next) => {
 router.post("/new", async (req, res) => {
   try {
     console.log("Apperently someone is trying to post a new recipe.");
-    console.log(req.body);
+    console.log("req.body:", req.body);
     // Create and save the recipe
     const newRecipe = await recipe.create(req.body);
 
@@ -104,27 +105,27 @@ router.post("/new", async (req, res) => {
         unit_singular: ingredientToAdd.unit_singular,
         unit_plural: ingredientToAdd.unit_plural,
       };
-
+      console.log("rec_ing", rec_ing);
       // Create and save a recipeIngredient
       const savedRecipeIngredient = await recipe_ingredient.create(rec_ing);
     }
 
-    // // Loop through all the items in req.tags
-    // for (const tag of req.body.tags) {
-    //   // Search for the tag with the givenTitle and make sure it exists. If it doesn't, create newTag.
-    //   const addTag = await tag.findOrCreate({
-    //     where: { title: tag.title },
-    //   });
+    // Loop through all the items in req.tags
+    for (const tagToAdd of req.body.tags) {
+      // Search for the tag with the givenTitle and make sure it exists. If it doesn't, create newTag.
+      const [Tag] = await tag.findOrCreate({
+        where: { title: tagToAdd.title },
+      });
 
-    //   // Create a dictionary with which to create the RecipeTag
-    //   const rec_tag = {
-    //     recipeId: newTag.id,
-    //     ingredientId: tag.id,
-    //   };
+      // Create a dictionary with which to create the RecipeTag
+      const rec_tag = {
+        recipeId: newRecipe.id,
+        tagId: Tag.id,
+      };
 
-    //   // Create and save a recipeIngredient
-    //   const savedRecipeIngredient = await recipe_ingredient.create(rec_ing);
-    // }
+      // Create and save a recipeTag
+      const savedRecipeTag = await recipe_tag.create(rec_tag);
+    }
 
     // If everything goes well, respond with the recipe.
     return res.status(200).json(newRecipe);
