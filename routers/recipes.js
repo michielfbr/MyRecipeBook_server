@@ -101,9 +101,9 @@ router.post("/new", async (req, res) => {
       const rec_ing = {
         recipeId: newRecipe.id,
         ingredientId: Ingredient.id,
-        quantity: ingredientToAdd.quantity,
-        unit_singular: ingredientToAdd.unit_singular,
-        unit_plural: ingredientToAdd.unit_plural,
+        quantity: ingredientToAdd.recipe_ingredients.quantity,
+        unit_singular: ingredientToAdd.recipe_ingredients.unit_singular,
+        unit_plural: ingredientToAdd.recipe_ingredients.unit_plural,
       };
       console.log("rec_ing", rec_ing);
       // Create and save a recipeIngredient
