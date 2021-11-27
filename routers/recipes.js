@@ -79,7 +79,7 @@ router.get("/:recipeId", async (req, res, next) => {
   }
 });
 
-// Add new recipes, with ingredients & tags
+// Add new recipe, with ingredients & tags
 router.post("/new", async (req, res) => {
   try {
     console.log("Apperently someone is trying to post a new recipe.");
@@ -126,6 +126,70 @@ router.post("/new", async (req, res) => {
       // Create and save a recipeTag
       const savedRecipeTag = await recipe_tag.create(rec_tag);
     }
+
+    // If everything goes well, respond with the recipe.
+    return res.status(200).json(newRecipe);
+  } catch (e) {
+    console.log(e.message);
+  }
+});
+
+// Add update recipe, with ingredients & tags
+router.put("/:recipeId", async (req, res) => {
+  try {
+    const recipeId = parseInt(req.params.recipeId);
+    console.log("Apperently someone is trying to update recipe", recipeId);
+    console.log("req.body:", req.body);
+
+    // Find recipe to update
+    constRecipeToUpdate = await recipe.findByPk(recipeId);
+
+    // Update the recipe
+    // Remove all recipe_ingredient & recipe_tag associations for recipe
+    // Create new recipe_ingredient & recipe_tag associations for recipe
+
+    // // Create and save the recipe
+    // const newRecipe = await recipe.create(req.body);
+
+    // // Loop through all the items in req.ingredients
+    // for (const ingredientToAdd of req.body.ingredients) {
+    //   console.log("ingedrientToAdd", ingredientToAdd);
+    //   // Search for the ingredient with the givenTitle and make sure it exists. If it doesn't, create newIngredient.
+    //   const [Ingredient] = await ingredient.findOrCreate({
+    //     where: {
+    //       title: ingredientToAdd.title,
+    //     },
+    //   });
+    //   console.log("Ingredient", Ingredient);
+    //   // Create a dictionary with which to create the RecipeIngredient
+    //   const rec_ing = {
+    //     recipeId: newRecipe.id,
+    //     ingredientId: Ingredient.id,
+    //     quantity: ingredientToAdd.recipe_ingredients.quantity,
+    //     unit_singular: ingredientToAdd.recipe_ingredients.unit_singular,
+    //     unit_plural: ingredientToAdd.recipe_ingredients.unit_plural,
+    //   };
+    //   console.log("rec_ing", rec_ing);
+    //   // Create and save a recipeIngredient
+    //   const savedRecipeIngredient = await recipe_ingredient.create(rec_ing);
+    // }
+
+    // // Loop through all the items in req.tags
+    // for (const tagToAdd of req.body.tags) {
+    //   // Search for the tag with the givenTitle and make sure it exists. If it doesn't, create newTag.
+    //   const [Tag] = await tag.findOrCreate({
+    //     where: { title: tagToAdd.title },
+    //   });
+
+    //   // Create a dictionary with which to create the RecipeTag
+    //   const rec_tag = {
+    //     recipeId: newRecipe.id,
+    //     tagId: Tag.id,
+    //   };
+
+    //   // Create and save a recipeTag
+    //   const savedRecipeTag = await recipe_tag.create(rec_tag);
+    // }
 
     // If everything goes well, respond with the recipe.
     return res.status(200).json(newRecipe);
