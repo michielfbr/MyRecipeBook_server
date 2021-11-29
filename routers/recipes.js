@@ -3,6 +3,7 @@ const authMiddleware = require("../auth/middleware");
 const { ingredient, recipe, tag } = require("../models/");
 const recipe_ingredient = require("../models").recipe_ingredient;
 const recipe_tag = require("../models").recipe_tag;
+const { Op } = require("sequelize");
 
 const router = new Router();
 
@@ -83,20 +84,20 @@ router.get("/:recipeId", async (req, res, next) => {
 router.post("/new", async (req, res) => {
   try {
     console.log("Apperently someone is trying to post a new recipe.");
-    console.log("req.body:", req.body);
+    // console.log("req.body:", req.body);
     // Create and save the recipe
     const newRecipe = await recipe.create(req.body);
 
     // Loop through all the items in req.ingredients
     for (const ingredientToAdd of req.body.ingredients) {
-      console.log("ingedrientToAdd", ingredientToAdd);
+      // console.log("ingedrientToAdd", ingredientToAdd);
       // Search for the ingredient with the givenTitle and make sure it exists. If it doesn't, create newIngredient.
       const [Ingredient] = await ingredient.findOrCreate({
         where: {
           title: ingredientToAdd.title,
         },
       });
-      console.log("Ingredient", Ingredient);
+      // console.log("Ingredient", Ingredient);
       // Create a dictionary with which to create the RecipeIngredient
       const rec_ing = {
         recipeId: newRecipe.id,
@@ -105,7 +106,7 @@ router.post("/new", async (req, res) => {
         unit_singular: ingredientToAdd.recipe_ingredients.unit_singular,
         unit_plural: ingredientToAdd.recipe_ingredients.unit_plural,
       };
-      console.log("rec_ing", rec_ing);
+      // console.log("rec_ing", rec_ing);
       // Create and save a recipeIngredient
       const savedRecipeIngredient = await recipe_ingredient.create(rec_ing);
     }
@@ -134,65 +135,153 @@ router.post("/new", async (req, res) => {
   }
 });
 
-// Add update recipe, with ingredients & tags
+// Update recipe, with ingredients & tags
 router.put("/:recipeId", async (req, res) => {
   try {
     const recipeId = parseInt(req.params.recipeId);
     console.log("Apperently someone is trying to update recipe", recipeId);
-    console.log("req.body:", req.body);
+    // console.log("req.body:", req.body);
 
     // Find recipe to update
-    constRecipeToUpdate = await recipe.findByPk(recipeId);
+    const recipeToUpdate = await recipe.findByPk(recipeId);
 
-    // Update the recipe
-    // Remove all recipe_ingredient & recipe_tag associations for recipe
-    // Create new recipe_ingredient & recipe_tag associations for recipe
+    // If found, update the recipe
+    if (!recipeToUpdate) {
+      res.status(404).send("Recipe not found");
+    } else {
+      const updatedRecipe = await recipeToUpdate.update(req.body);
+    }
+    // INGREDIENTS
 
-    // // Create and save the recipe
-    // const newRecipe = await recipe.create(req.body);
+    // Remove ingredient associations for ingredients no longer used
 
-    // // Loop through all the items in req.ingredients
-    // for (const ingredientToAdd of req.body.ingredients) {
-    //   console.log("ingedrientToAdd", ingredientToAdd);
-    //   // Search for the ingredient with the givenTitle and make sure it exists. If it doesn't, create newIngredient.
-    //   const [Ingredient] = await ingredient.findOrCreate({
-    //     where: {
-    //       title: ingredientToAdd.title,
-    //     },
-    //   });
-    //   console.log("Ingredient", Ingredient);
-    //   // Create a dictionary with which to create the RecipeIngredient
-    //   const rec_ing = {
-    //     recipeId: newRecipe.id,
-    //     ingredientId: Ingredient.id,
-    //     quantity: ingredientToAdd.recipe_ingredients.quantity,
-    //     unit_singular: ingredientToAdd.recipe_ingredients.unit_singular,
-    //     unit_plural: ingredientToAdd.recipe_ingredients.unit_plural,
-    //   };
-    //   console.log("rec_ing", rec_ing);
-    //   // Create and save a recipeIngredient
-    //   const savedRecipeIngredient = await recipe_ingredient.create(rec_ing);
-    // }
+    // Get [] of Ids for submitted ingredients that already exist
+    const ingredientTitles = req.body.ingredients.map((ingr) => {
+      return ingr.title;
+    });
+    const existingIngredients = await ingredient.findAll({
+      where: {
+        title: ingredientTitles,
+      },
+      attributes: ["id", "title"],
+    });
+    // console.log("existingIngredients", existingIngredients);
+    const existingIngredientIds = existingIngredients.map((ingr) => {
+      return ingr.id;
+    });
 
-    // // Loop through all the items in req.tags
-    // for (const tagToAdd of req.body.tags) {
-    //   // Search for the tag with the givenTitle and make sure it exists. If it doesn't, create newTag.
-    //   const [Tag] = await tag.findOrCreate({
-    //     where: { title: tagToAdd.title },
-    //   });
+    // console.log("existingIngredientIds", existingIngredientIds);
 
-    //   // Create a dictionary with which to create the RecipeTag
-    //   const rec_tag = {
-    //     recipeId: newRecipe.id,
-    //     tagId: Tag.id,
-    //   };
+    // Delete existing recipe_ingredient associations for ingredients not submitted
+    const surplusRecipeIngredient = await recipe_ingredient.destroy({
+      where: {
+        recipeId: recipeId,
+        [Op.not]: [{ ingredientId: existingIngredientIds }],
+      },
+    });
+    // console.log("surplusRecipeIngredient", surplusRecipeIngredient);
 
-    //   // Create and save a recipeTag
-    //   const savedRecipeTag = await recipe_tag.create(rec_tag);
-    // }
+    // Loop through all the submitted ingredients
+    for (const ingredientToAdd of req.body.ingredients) {
+      // console.log("ingedrientToAdd", ingredientToAdd);
+      // Search for the ingredient with the givenTitle and make sure it exists. If it doesn't, create newIngredient.
+      const [Ingredient] = await ingredient.findOrCreate({
+        where: {
+          title: ingredientToAdd.title,
+        },
+      });
+
+      // Find existing recipe_ingredient associations
+      const existingRecIng = await recipe_ingredient.findOne({
+        where: {
+          recipeId: recipeId,
+          ingredientId: Ingredient.id,
+        },
+      });
+      // console.log("existingRecIng", existingRecIng);
+
+      if (!existingRecIng) {
+        // If not present: create recipe_ingredient association
+        const newRecIng = {
+          recipeId: recipeId,
+          ingredientId: Ingredient.id,
+          quantity: ingredientToAdd.recipe_ingredients.quantity,
+          unit_singular: ingredientToAdd.recipe_ingredients.unit_singular,
+          unit_plural: ingredientToAdd.recipe_ingredients.unit_plural,
+        };
+        const createdRecipeIngredient = await recipe_ingredient.create(
+          newRecIng
+        );
+        // console.log("createdRecipeIngredient", createdRecipeIngredient);
+      } else {
+        // If present: update recipe_ingredient association
+        const updatedRecipeIngredient = await recipe_ingredient.update(
+          {
+            quantity: ingredientToAdd.recipe_ingredients.quantity,
+            unit_singular: ingredientToAdd.recipe_ingredients.unit_singular,
+            unit_plural: ingredientToAdd.recipe_ingredients.unit_plural,
+          },
+          {
+            where: {
+              recipeId: recipeId,
+              ingredientId: Ingredient.id,
+            },
+          }
+        );
+        // console.log("updatedRecipeIngredient", updatedRecipeIngredient);
+      }
+    }
+
+    // TAGS
+    // Remove tag associations for tags no longer used
+    // Get [] of Ids for submitted tags that already exist
+    const tagTitles = req.body.tags.map((tag) => {
+      return tag.title;
+    });
+    const existingTags = await tag.findAll({
+      where: {
+        title: tagTitles,
+      },
+      attributes: ["id", "title"],
+    });
+    // console.log("existingTags", existingTags);
+    const existingTagIds = existingTags.map((tag) => {
+      return tag.id;
+    });
+
+    // console.log("existingTagIds", existingTagIds);
+
+    // Delete existing recipe_tag associations for tags not submitted
+    const surplusRecipeTag = await recipe_tag.destroy({
+      where: {
+        recipeId: recipeId,
+        [Op.not]: [{ tagId: existingTagIds }],
+      },
+    });
+    // console.log("surplusRecipeTag", surplusRecipeTag);
+
+    // Loop through all the submitted tags
+    for (const tagToAdd of req.body.tags) {
+      // console.log("tagToAdd", tagToAdd);
+      // Search for the tag with the givenTitle and make sure it exists. If it doesn't, create newTag.
+      const [Tag] = await tag.findOrCreate({
+        where: {
+          title: tagToAdd.title,
+        },
+      });
+
+      // Search for existing recipe_tag association, create if none.
+      const RecTagToAdd = await recipe_tag.findOrCreate({
+        where: {
+          recipeId: recipeId,
+          tagId: Tag.id,
+        },
+      });
+      // console.log("RecTagToAdd", RecTagToAdd);
+    }
 
     // If everything goes well, respond with the recipe.
-    return res.status(200).json(newRecipe);
+    return res.status(200).json(updatedRecipe);
   } catch (e) {
     console.log(e.message);
   }
