@@ -4,6 +4,7 @@ const corsMiddleWare = require("cors");
 const { PORT } = require("./config/constants");
 const recipeRouter = require("./routers/recipes");
 const authRouter = require("./routers/auth");
+const { ingredient, recipe, tag } = require("./models/");
 
 const app = express();
 app.use(corsMiddleWare());
@@ -55,4 +56,17 @@ app.post("/echo", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Listening on port: ${PORT}`);
+});
+
+// Get all ingredients
+app.get("/ingredients", async (req, res, next) => {
+  try {
+    const allIngredients = await ingredient.findAll({
+      attributes: ["id", "title"]
+    });
+
+    res.status(200).send(allIngredients);
+  } catch (e) {
+    console.log(e.message);
+  }
 });
