@@ -287,4 +287,39 @@ router.put("/:recipeId", async (req, res) => {
   }
 });
 
+// Delete specific recipe by :id
+router.delete("/:recipeId", async (req, res, next) => {
+  try {
+    const recipeId = parseInt(req.params.recipeId);
+    console.log(recipeId);
+
+    // Find recipe to delete
+    const recipeToDelete = await recipe.findByPk(recipeId);
+
+    // If found, delete the recipe & its ingredient+tag associations
+    if (!recipeToDelete) {
+      res.status(404).send("Recipe not found");
+    } else {
+      const deletedRecipe = await recipe.destroy({
+        where: {
+          id: recipeId,
+        },
+      });
+      const deletedRecipeIngredients = await recipe_ingredient.destroy({
+        where: {
+          recipeId: recipeId,
+        },
+      });
+      const deletedRecipeTag = await recipe_tag.destroy({
+        where: {
+          recipeId: recipeId,
+        },
+      });
+      return res.status(200).json(deletedRecipe, deletedRecipeIngredients, deletedRecipeTag);
+    }
+  } catch (e) {
+    console.log(e.message);
+  }
+});
+
 module.exports = router;
