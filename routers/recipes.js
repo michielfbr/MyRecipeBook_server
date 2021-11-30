@@ -28,7 +28,7 @@ router.get("/all/:userId", async (req, res, next) => {
           model: tag,
           as: `tags`,
           required: false,
-          attributes: ["title"],
+          attributes: ["id", "title"],
           through: { attributes: [] },
         },
       ],
