@@ -129,7 +129,7 @@ router.post("/new", async (req, res) => {
     }
 
     // If everything goes well, respond with the recipe.
-    return res.status(200).json(newRecipe);
+    return res.status(201).json(newRecipe);
   } catch (e) {
     console.log(e.message);
   }
@@ -281,7 +281,7 @@ router.put("/:recipeId", async (req, res) => {
     }
 
     // If everything goes well, respond with the recipe.
-    return res.status(200).json(updatedRecipe);
+    return res.status(201).json(updatedRecipe);
   } catch (e) {
     console.log(e.message);
   }
