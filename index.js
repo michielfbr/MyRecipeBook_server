@@ -21,19 +21,45 @@ if (process.env.DELAY) {
 app.use("/auth", authRouter);
 app.use("/recipe", recipeRouter);
 
+// Get all ingredients
+app.get("/ingredients", async (req, res, next) => {
+  try {
+    const allIngredients = await ingredient.findAll({
+      attributes: ["id", "title"]
+    });
+
+    res.status(200).send(allIngredients);
+  } catch (e) {
+    console.log(e.message);
+  }
+});
+
+// Get all tags
+app.get("/tags", async (req, res, next) => {
+  try {
+    const allTags = await tag.findAll({
+      attributes: ["id", "title"]
+    });
+
+    res.status(200).send(allTags);
+  } catch (e) {
+    console.log(e.message);
+  }
+});
+
 // // GET endpoint for testing purposes, can be removed
 // app.get("/", (req, res) => {
 //   res.send("Hi from express");
 // });
 
-// POST endpoint for testing purposes, can be removed
-app.post("/echo", (req, res) => {
-  res.json({
-    youPosted: {
-      ...req.body,
-    },
-  });
-});
+// // POST endpoint for testing purposes, can be removed
+// app.post("/echo", (req, res) => {
+//   res.json({
+//     youPosted: {
+//       ...req.body,
+//     },
+//   });
+// });
 
 // // POST endpoint which requires a token for testing purposes, can be removed
 // app.post("/authorized_post_request", authMiddleWare, (req, res) => {
@@ -56,17 +82,4 @@ app.post("/echo", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Listening on port: ${PORT}`);
-});
-
-// Get all ingredients
-app.get("/ingredients", async (req, res, next) => {
-  try {
-    const allIngredients = await ingredient.findAll({
-      attributes: ["id", "title"]
-    });
-
-    res.status(200).send(allIngredients);
-  } catch (e) {
-    console.log(e.message);
-  }
 });
