@@ -6,13 +6,31 @@ module.exports = {
       "tags",
       [
         {
-          title: "Quick",
-          category: "time",
+          title: "indonesisch",
+          category: "origin",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
-          title: "Easy",
+          title: "vegetarisch",
+          category: "diet",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          title: "zoet",
+          category: "flavor",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          title: "hoofdgerecht",
+          category: "meal",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          title: "makkelijk",
           category: "difficulty",
           createdAt: new Date(),
           updatedAt: new Date(),
