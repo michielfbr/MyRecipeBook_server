@@ -41,7 +41,6 @@ router.post("/login", async (req, res, next) => {
 });
 
 // User signup
-// TODO: change to MyRecipeBook user params
 router.post("/signup", async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
   if (!email || !password || !firstName || !lastName) {
@@ -66,7 +65,7 @@ router.post("/signup", async (req, res) => {
       console.log(error);
       return res
         .status(400)
-        .send({ message: "There is an existing account with this email" });
+        .send({ message: "There is allready an account for this email" });
     }
     console.log(error);
     return res.status(400).send({ message: "Something went wrong, sorry" });
