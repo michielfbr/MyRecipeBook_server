@@ -44,11 +44,14 @@ router.get("/all/:userId", async (req, res, next) => {
 router.post("/all/:userId", async (req, res, next) => {
   try {
     const userId = parseInt(req.params.userId);
-    const { search } = req.body;
+    const splitSearch = req.body.search.split(" ").map((e) => e.trim());
     const allRecipes = await recipe.findAll({
       where: {
         userId: userId,
-        title: {[Op.like]: '%' + search + '%' }
+        [Op.and]: splitSearch.map((searchWord) => {
+          const search = { title: { [Op.iLike]: `%${searchWord}%` } };
+          return search;
+        }),
       },
       attributes: ["id", "title", "cookingTime", "imageUrl"],
       include: [
