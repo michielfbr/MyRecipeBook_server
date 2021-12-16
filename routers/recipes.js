@@ -40,6 +40,37 @@ router.get("/all/:userId", async (req, res, next) => {
   }
 });
 
+// Get all recipes of user and matching search query
+router.post("/all/:userId", async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const splitSearch = req.body.search.split(" ").map((e) => e.trim());
+    const allRecipes = await recipe.findAll({
+      where: {
+        userId: userId,
+        [Op.and]: splitSearch.map((searchWord) => {
+          const search = { title: { [Op.iLike]: `%${searchWord}%` } };
+          return search;
+        }),
+      },
+      attributes: ["id", "title", "cookingTime", "imageUrl"],
+      include: [
+        {
+          model: tag,
+          as: `tags`,
+          required: false,
+          attributes: ["id", "title"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+    // console.log("All recipes requested for user:", userId, "searching", );
+    res.status(200).send(allRecipes);
+  } catch (e) {
+    console.log(e.message);
+  }
+});
+
 // Get specific recipe by :id
 router.get("/:recipeId", async (req, res, next) => {
   try {
@@ -315,7 +346,9 @@ router.delete("/:recipeId", async (req, res, next) => {
           recipeId: recipeId,
         },
       });
-      return res.status(200).json(deletedRecipe, deletedRecipeIngredients, deletedRecipeTag);
+      return res
+        .status(200)
+        .json(deletedRecipe, deletedRecipeIngredients, deletedRecipeTag);
     }
   } catch (e) {
     console.log(e.message);
