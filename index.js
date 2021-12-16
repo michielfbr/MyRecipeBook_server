@@ -25,7 +25,7 @@ app.use("/recipe", recipeRouter);
 app.get("/ingredients", async (req, res, next) => {
   try {
     const allIngredients = await ingredient.findAll({
-      attributes: ["id", "title"]
+      attributes: ["id", "title"],
     });
 
     res.status(200).send(allIngredients);
@@ -38,7 +38,7 @@ app.get("/ingredients", async (req, res, next) => {
 app.get("/tags", async (req, res, next) => {
   try {
     const allTags = await tag.findAll({
-      attributes: ["id", "title"]
+      attributes: ["id", "title"],
     });
 
     res.status(200).send(allTags);

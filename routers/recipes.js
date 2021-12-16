@@ -46,40 +46,6 @@ router.post("/all/:userId", async (req, res, next) => {
     const userId = parseInt(req.params.userId);
     const splitSearch = req.body.search.split(" ").map((e) => e.trim());
 
-    // ########## Find tags matching 1 search word and return their Ids
-    const tagMatch = await tag.findAll({
-      where: {
-        [Op.or]: splitSearch.map((searchWord) => {
-          const ingr = { title: { [Op.iLike]: `%${searchWord}%` } };
-          return ingr;
-        }),
-      },
-      attributes: ["id", "title"],
-    });
-    // console.log("tagMatch", tagMatch);
-
-    const tagMatchIds = tagMatch.map((t) => {
-      return t.id;
-    });
-
-    // console.log("tagMatchIds", tagMatchIds);
-
-    // Find recipe_tag relations where recipeIds are equal && tagId matches all search tagIds, return recipeIds
-    // TO DO: only return recipeIds if tag matches all search words
-    const recipeTagMatch = await recipe_tag.findAll({
-      where: {
-        tagId: tagMatchIds,
-      },
-      attributes: ["recipeId"],
-    });
-    // console.log("recipeTagMatch", recipeTagMatch);
-
-    const recipeTagMatchIds = recipeTagMatch.map((t) => {
-      return t.recipeId;
-    });
-
-    // console.log("recipeIngredientMatchIds", recipeIngredientMatchIds);
-
     // ########## Find ingredients matching 1 search word and return their Ids
     const ingredientMatch = await ingredient.findAll({
       where: {
@@ -114,6 +80,44 @@ router.post("/all/:userId", async (req, res, next) => {
 
     // console.log("recipeIngredientMatchIds", recipeIngredientMatchIds);
 
+    // ########## Find tags matching 1 search word and return their Ids
+    const tagMatch = await tag.findAll({
+      where: {
+        [Op.or]: splitSearch.map((searchWord) => {
+          const tag = { title: { [Op.iLike]: `%${searchWord}%` } };
+          return tag;
+        }),
+      },
+      attributes: ["id", "title"],
+    });
+    // console.log("tagMatch", tagMatch);
+
+    const tagMatchIds = tagMatch.map((t) => {
+      return t.id;
+    });
+
+    // console.log("tagMatchIds", tagMatchIds);
+
+    // Find recipe_tag relations where recipeIds are equal && tagId matches all search tagIds, return recipeIds
+    // TO DO: only return recipeIds if tag matches all search words
+    const recipeTagMatch = await recipe_tag.findAll({
+      where: {
+        tagId: tagMatchIds,
+      },
+      attributes: ["recipeId"],
+    });
+    // console.log("recipeTagMatch", recipeTagMatch);
+
+    const recipeTagMatchIds = recipeTagMatch.map((t) => {
+      return t.recipeId;
+    });
+
+    // console.log("recipeTagMatchIds", recipeTagMatchIds);
+
+    // Merge recipeIngredientMatchIds and recipeTagMatchIds arrays
+    const matchingIds = [...recipeIngredientMatchIds, ...recipeTagMatchIds];
+    // console.log("matchingIds", matchingIds);
+
     // ########## Find and return recipes where title/ingredients/tags contain search words
     const recipeMatch = await recipe.findAll({
       where: {
@@ -122,8 +126,7 @@ router.post("/all/:userId", async (req, res, next) => {
           const search = { title: { [Op.iLike]: `%${searchWord}%` } };
           return search;
         }),
-        [Op.or]: { id: recipeIngredientMatchIds },
-        [Op.or]: { id: recipeTagMatchIds },
+        [Op.or]: { id: matchingIds },
       },
       attributes: ["id", "title", "cookingTime", "imageUrl"],
       include: [
