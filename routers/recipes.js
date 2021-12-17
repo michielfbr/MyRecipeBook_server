@@ -7,7 +7,7 @@ const { Op } = require("sequelize");
 
 const router = new Router();
 
-// Get all recipes of user
+// #################### Get all recipes of user ####################
 router.get("/all/:userId", async (req, res, next) => {
   try {
     const userId = parseInt(req.params.userId);
@@ -40,7 +40,113 @@ router.get("/all/:userId", async (req, res, next) => {
   }
 });
 
-// Get specific recipe by :id
+// #################### Get all recipes of user and matching search query ####################
+router.post("/all/:userId", async (req, res, next) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const splitSearch = req.body.search.split(" ").map((e) => e.trim());
+
+    // ########## Find ingredients matching 1 search word and return their Ids
+    const ingredientMatch = await ingredient.findAll({
+      where: {
+        [Op.or]: splitSearch.map((searchWord) => {
+          const ingr = { title: { [Op.iLike]: `%${searchWord}%` } };
+          return ingr;
+        }),
+      },
+      attributes: ["id", "title"],
+    });
+    // console.log("ingredientMatch", ingredientMatch);
+
+    const ingredientMatchIds = ingredientMatch.map((i) => {
+      return i.id;
+    });
+
+    // console.log("ingredientMatchIds", ingredientMatchIds);
+
+    // Find recipe_ingredient relations where recipeIds are equal && ingredientId matches all search ingredientIds, return recipeIds
+    // TO DO: only return recipeIds if ingredient matches all search words
+    const recipeIngredientMatch = await recipe_ingredient.findAll({
+      where: {
+        ingredientId: ingredientMatchIds,
+      },
+      attributes: ["recipeId"],
+    });
+    // console.log("recipeIngredientMatch", recipeIngredientMatch);
+
+    const recipeIngredientMatchIds = recipeIngredientMatch.map((i) => {
+      return i.recipeId;
+    });
+
+    // console.log("recipeIngredientMatchIds", recipeIngredientMatchIds);
+
+    // ########## Find tags matching 1 search word and return their Ids
+    const tagMatch = await tag.findAll({
+      where: {
+        [Op.or]: splitSearch.map((searchWord) => {
+          const tag = { title: { [Op.iLike]: `%${searchWord}%` } };
+          return tag;
+        }),
+      },
+      attributes: ["id", "title"],
+    });
+    // console.log("tagMatch", tagMatch);
+
+    const tagMatchIds = tagMatch.map((t) => {
+      return t.id;
+    });
+
+    // console.log("tagMatchIds", tagMatchIds);
+
+    // Find recipe_tag relations where recipeIds are equal && tagId matches all search tagIds, return recipeIds
+    // TO DO: only return recipeIds if tag matches all search words
+    const recipeTagMatch = await recipe_tag.findAll({
+      where: {
+        tagId: tagMatchIds,
+      },
+      attributes: ["recipeId"],
+    });
+    // console.log("recipeTagMatch", recipeTagMatch);
+
+    const recipeTagMatchIds = recipeTagMatch.map((t) => {
+      return t.recipeId;
+    });
+
+    // console.log("recipeTagMatchIds", recipeTagMatchIds);
+
+    // Merge recipeIngredientMatchIds and recipeTagMatchIds arrays
+    const matchingIds = [...recipeIngredientMatchIds, ...recipeTagMatchIds];
+    // console.log("matchingIds", matchingIds);
+
+    // ########## Find and return recipes where title/ingredients/tags contain search words
+    const recipeMatch = await recipe.findAll({
+      where: {
+        userId: userId,
+        [Op.or]: splitSearch.map((searchWord) => {
+          const search = { title: { [Op.iLike]: `%${searchWord}%` } };
+          return search;
+        }),
+        [Op.or]: { id: matchingIds },
+      },
+      attributes: ["id", "title", "cookingTime", "imageUrl"],
+      include: [
+        {
+          model: tag,
+          as: `tags`,
+          required: false,
+          attributes: ["id", "title"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+    // console.log("All recipes requested for user:", userId, "searching", );
+    res.status(200).send(recipeMatch);
+  } catch (e) {
+    console.log(e.message);
+  }
+});
+
+// #################### Get specific recipe by :id ####################
 router.get("/:recipeId", async (req, res, next) => {
   try {
     const recipeId = parseInt(req.params.recipeId);
@@ -80,7 +186,7 @@ router.get("/:recipeId", async (req, res, next) => {
   }
 });
 
-// Add new recipe, with ingredients & tags
+// #################### Add new recipe, with ingredients & tags ####################
 router.post("/new", async (req, res) => {
   try {
     console.log("Apperently someone is trying to post a new recipe.");
@@ -135,7 +241,7 @@ router.post("/new", async (req, res) => {
   }
 });
 
-// Update recipe, with ingredients & tags
+// #################### Update recipe, with ingredients & tags ####################
 router.put("/:recipeId", async (req, res) => {
   try {
     const recipeId = parseInt(req.params.recipeId);
@@ -287,7 +393,7 @@ router.put("/:recipeId", async (req, res) => {
   }
 });
 
-// Delete specific recipe by :id
+// #################### Delete specific recipe by :id ####################
 router.delete("/:recipeId", async (req, res, next) => {
   try {
     const recipeId = parseInt(req.params.recipeId);
@@ -315,7 +421,9 @@ router.delete("/:recipeId", async (req, res, next) => {
           recipeId: recipeId,
         },
       });
-      return res.status(200).json(deletedRecipe, deletedRecipeIngredients, deletedRecipeTag);
+      return res
+        .status(200)
+        .json(deletedRecipe, deletedRecipeIngredients, deletedRecipeTag);
     }
   } catch (e) {
     console.log(e.message);
